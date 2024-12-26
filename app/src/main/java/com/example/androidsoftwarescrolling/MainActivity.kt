@@ -6,26 +6,55 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.androidsoftwarescrolling.ui.theme.Purple40
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 val arrayFirstName = arrayListOf(
-    "Даниил", "Ефим", "Кирилл", "Максим", "Егор", "Борис", "Тимофей", "Влад"
-    , "Игорь", "Аркадий", "Трофим", "Виктор", "Валерий"
+    "Даниил",
+    "Ефим",
+    "Кирилл",
+    "Максим",
+    "Егор",
+    "Борис",
+    "Тимофей",
+    "Влад",
+    "Игорь",
+    "Аркадий",
+    "Трофим",
+    "Виктор",
+    "Валерий"
 )
 val arraySecondName = arrayListOf(
-    "Цивилев", "Баданин", "Шнайдер", "Фролов", "Рогачев", "Фомин", "Лавров", "Седых"
-    , "Ткаченко", "Иванов", "Долгих", "Базовкин", "Кабанов", "цивилев"
+    "Цивилев",
+    "Баданин",
+    "Шнайдер",
+    "Фролов",
+    "Рогачев",
+    "Фомин",
+    "Лавров",
+    "Седых",
+    "Ткаченко",
+    "Иванов",
+    "Долгих",
+    "Базовкин",
+    "Кабанов",
+    "Цивилев"
 )
 
 @ExperimentalFoundationApi
@@ -36,7 +65,14 @@ class MainActivity : ComponentActivity() {
         setContent {
             fillingPersons(80, false)
             var group = persons.groupBy { it.role }
-            GroupindPersons(group)
+            val listState = rememberLazyListState()
+            val coroutineScope = rememberCoroutineScope()
+
+            GroupindPersons(
+                group,
+                listState,
+                coroutineScope
+            )
         }
     }
 }
@@ -76,33 +112,64 @@ fun fillingPersons(count: Int, equalDistribution: Boolean) {
 
 @ExperimentalFoundationApi
 @Composable
-fun GroupindPersons(group: Map<Role, List<Person>>) {
+fun GroupindPersons(
+    group: Map<Role, List<Person>>,
+    listState: LazyListState,
+    coroutineScope: CoroutineScope,
+) {
     LazyColumn(
-        contentPadding = PaddingValues(6.dp)
+        contentPadding = PaddingValues(6.dp),
+        state = listState
     ) {
+        item{
+            Text(text = "В конец",
+                modifier = Modifier
+                    .padding(8.dp)
+                    .background(Color.LightGray)
+                    .padding(6.dp)
+                    .clickable{
+                        coroutineScope.launch{
+                            listState.animateScrollToItem(
+                                persons.size-1
+                            )
+                        }
+                    })
+        }
         group
             .toSortedMap(compareBy { it })
             .forEach { (role, persons) ->
-            stickyHeader {
-                Text(
-                    text = role.toString(),
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier
-                        .background(Purple40)
-                        .padding(6.dp)
-                        .fillParentMaxWidth()
-                )
+                stickyHeader {
+                    Text(
+                        text = role.toString(),
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier
+                            .background(Purple40)
+                            .padding(6.dp)
+                            .fillParentMaxWidth()
+                    )
+                }
+                items(persons.sortedWith(compareBy({ it.secondName }, { it.firstName }))) {
+                    Text(
+                        text = "${it.secondName} ${it.firstName}",
+                        modifier = Modifier
+                            .padding(6.dp),
+                        fontSize = 32.sp
+                    )
+                }
             }
-            items(persons.sortedWith(compareBy({ it.secondName }, { it.firstName }))) {
-                Text(
-                    text = "${it.secondName} ${it.firstName}",
-                    modifier = Modifier
-                        .padding(6.dp),
-                    fontSize = 32.sp
-                )
-            }
+        item{
+            Text(text = "В начало",
+                modifier = Modifier
+                    .padding(8.dp)
+                    .background(Color.LightGray)
+                    .padding(6.dp)
+                    .clickable{
+                        coroutineScope.launch{
+                            listState.animateScrollToItem(0)
+                        }
+                    })
         }
     }
 }
